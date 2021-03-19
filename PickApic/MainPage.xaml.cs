@@ -8,11 +8,12 @@ namespace PickApic
 {
     public partial class MainPage : ContentPage
     {
-        public object PhotoPath { get; private set; }
+        public string PhotoPath { get; private set; }
 
         public MainPage()
         {
             InitializeComponent();
+            BindingContext = this;
         }
 
          async void TakePhotoAsync(object sender, EventArgs e)
@@ -52,12 +53,23 @@ namespace PickApic
                 return;
             }
             // save the file into local storage
-            var newFile = Path.Combine(FileSystem.CacheDirectory, photo.FileName);
+            string newFile = Path.Combine(FileSystem.CacheDirectory, photo.FileName);
             using (var stream = await photo.OpenReadAsync())
             using (var newStream = File.OpenWrite(newFile))
                 await stream.CopyToAsync(newStream);
-
+            Image.Source = ImageSource.FromFile(newFile);
             PhotoPath = newFile;
+        }
+
+        async void SharePhotoAsync(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(PhotoPath)) return;
+            
+            await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = Title,
+                File = new ShareFile(PhotoPath)
+            });
         }
     }
 }
